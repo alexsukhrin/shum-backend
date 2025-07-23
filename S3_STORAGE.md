@@ -47,17 +47,17 @@ Your marketplace project is configured to store all media files (photos, avatars
 ### **S3 Settings (Production):**
 ```python
 # AWS S3 Configuration
-AWS_STORAGE_BUCKET_NAME = "marketplace-bucket-nwnu4de2"
+AWS_STORAGE_BUCKET_NAME = "your-marketplace-bucket"
 AWS_S3_REGION_NAME = "eu-central-1"
-AWS_S3_CUSTOM_DOMAIN = "marketplace-bucket-nwnu4de2.s3.amazonaws.com"
-MEDIA_URL = "https://marketplace-bucket-nwnu4de2.s3.amazonaws.com/media/"
+AWS_S3_CUSTOM_DOMAIN = "your-marketplace-bucket.s3.amazonaws.com"
+MEDIA_URL = "https://your-marketplace-bucket.s3.amazonaws.com/media/"
 
 # Storage backend for media files
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
-            "bucket_name": "marketplace-bucket-nwnu4de2",
+            "bucket_name": "your-marketplace-bucket",
             "region_name": "eu-central-1",
             "location": "media",
             "file_overwrite": False,
@@ -69,9 +69,9 @@ STORAGES = {
 
 ### **Required AWS Variables:**
 ```env
-DJANGO_AWS_ACCESS_KEY_ID=AKIA6DBXZQEBXZ3HT5AH
-DJANGO_AWS_SECRET_ACCESS_KEY=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
-DJANGO_AWS_STORAGE_BUCKET_NAME=marketplace-bucket-nwnu4de2
+DJANGO_AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+DJANGO_AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+DJANGO_AWS_STORAGE_BUCKET_NAME=your-marketplace-bucket
 AWS_DEFAULT_REGION=eu-central-1
 ```
 
@@ -124,7 +124,7 @@ curl -X POST http://localhost:8000/api/ads/1/mark_sold/ \
   "last_name": "Doe",
   "name": "John Doe",
   "avatar": "avatars/user_1/profile.jpg",
-  "avatar_url": "https://marketplace-bucket-nwnu4de2.s3.amazonaws.com/media/avatars/user_1/profile.jpg"
+  "avatar_url": "https://your-bucket.s3.amazonaws.com/media/avatars/user_1/profile.jpg"
 }
 ```
 
@@ -143,12 +143,12 @@ curl -X POST http://localhost:8000/api/ads/1/mark_sold/ \
     "email": "seller@example.com",
     "name": "John Seller"
   },
-  "main_image_url": "https://marketplace-bucket-nwnu4de2.s3.amazonaws.com/media/ads/ad_1/main.jpg",
+  "main_image_url": "https://your-bucket.s3.amazonaws.com/media/ads/ad_1/main.jpg",
   "images": [
     {
       "id": 1,
       "image": "ads/ad_1/main.jpg",
-      "image_url": "https://marketplace-bucket-nwnu4de2.s3.amazonaws.com/media/ads/ad_1/main.jpg",
+      "image_url": "https://your-bucket.s3.amazonaws.com/media/ads/ad_1/main.jpg",
       "alt_text": "iPhone front view",
       "order": 1,
       "created_at": "2025-01-22T10:30:00Z"
@@ -162,7 +162,7 @@ curl -X POST http://localhost:8000/api/ads/1/mark_sold/ \
 ## 🏗️ **File Structure in S3**
 
 ```
-marketplace-bucket-nwnu4de2/
+your-marketplace-bucket/
 ├── media/
 │   ├── avatars/
 │   │   ├── user_1/
@@ -191,7 +191,7 @@ marketplace-bucket-nwnu4de2/
       "Effect": "Allow",
       "Principal": "*",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::marketplace-bucket-nwnu4de2/media/*"
+      "Resource": "arn:aws:s3:::your-marketplace-bucket/media/*"
     }
   ]
 }
@@ -212,12 +212,14 @@ marketplace-bucket-nwnu4de2/
 ## 🧪 **Testing S3 Storage**
 
 ### **1. Development (Локально):**
+⚠️ **ВАЖНО: Никогда не коммитите реальные AWS ключи в Git!**
+
 Для локального тестирования можно настроить S3, добавив AWS credentials:
 
 ```env
 # .envs/.local/.django
-DJANGO_AWS_ACCESS_KEY_ID=your-access-key
-DJANGO_AWS_SECRET_ACCESS_KEY=your-secret-key
+DJANGO_AWS_ACCESS_KEY_ID=your-access-key-here
+DJANGO_AWS_SECRET_ACCESS_KEY=your-secret-key-here
 DJANGO_AWS_STORAGE_BUCKET_NAME=your-bucket-name
 AWS_DEFAULT_REGION=eu-central-1
 ```
@@ -230,7 +232,7 @@ curl -X POST http://your-domain.com/api/ads/1/upload_image/ \
   -F "image=@test_image.jpg"
 
 # 2. Проверить что URL ведет на S3
-curl -I "https://marketplace-bucket-nwnu4de2.s3.amazonaws.com/media/ads/ad_1/image.jpg"
+curl -I "https://your-bucket.s3.amazonaws.com/media/ads/ad_1/image.jpg"
 ```
 
 ### **3. Проверка настроек в Django shell:**
@@ -243,7 +245,7 @@ python manage.py shell
 # Должно быть: 'storages.backends.s3.S3Storage'
 
 >>> print(settings.MEDIA_URL)
-# Должно быть: 'https://marketplace-bucket-nwnu4de2.s3.amazonaws.com/media/'
+# Должно быть: 'https://your-bucket.s3.amazonaws.com/media/'
 ```
 
 ## 🚨 **Important Notes**
