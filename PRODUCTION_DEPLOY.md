@@ -55,67 +55,27 @@ sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-### 2. Create required directories and files:
+### 2. Create required directories:
 ```bash
 # Create project directory
 mkdir -p /home/ec2-user/shum
 cd /home/ec2-user/shum
 
-# Create production env file
-nano .env.production
+# No .env file needed - all variables come from GitLab CI/CD
 ```
 
-### 3. Content for `.env.production` file on server:
-```env
-# Django
-DJANGO_SETTINGS_MODULE=config.settings.production
-DJANGO_SECRET_KEY=your-very-secret-key-here
-DJANGO_ADMIN_URL=your-admin-url-here/
-DJANGO_ALLOWED_HOSTS=your-domain.com,www.your-domain.com
-
-# Database
-DATABASE_URL=postgres://postgres:your-password@postgres:5432/shum_production
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
-POSTGRES_DB=shum_production
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your-postgres-password
-
-# Redis
-REDIS_URL=redis://redis:6379/0
-
-# Email
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-EMAIL_USE_TLS=True
-
-# AWS (Optional)
-DJANGO_AWS_ACCESS_KEY_ID=your-aws-access-key
-DJANGO_AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-DJANGO_AWS_STORAGE_BUCKET_NAME=your-bucket-name
-
-# Sentry (Optional)
-SENTRY_DSN=your-sentry-dsn
-```
-
-### 4. Create Docker network:
+### 3. Create Docker network and volumes:
 ```bash
+# Create network
 docker network create shum-production-net
-```
 
-### 5. Create volumes:
-```bash
-docker volume create shum_production_postgres_data
-docker volume create shum_production_postgres_data_backups
-docker volume create shum_production_traefik
+# Create volumes
 docker volume create static_volume
 ```
 
 ## 🔄 Deployment Process
 
-When you push to `main` branch, GitHub Actions will:
+When you push to `main` branch, GitLab CI/CD will:
 
 1. **Run tests** - Linting and pytest
 2. **Build Docker image** - With commit SHA tag
@@ -123,10 +83,21 @@ When you push to `main` branch, GitHub Actions will:
 4. **SSH to EC2 server**
 5. **Pull new image**
 6. **Stop old containers**
-7. **Run database migrations**
-8. **Collect static files**
-9. **Start new containers**
+7. **Run database migrations** (against AWS RDS)
+8. **Collect static files** (to AWS S3 or local volume)
+9. **Start new containers** with all environment variables from GitLab
 10. **Clean up old images**
+
+## 🏗️ Architecture
+
+**Services running on EC2:**
+- **Django** - Main application
+- **Redis** - Caching and sessions
+- **Traefik** - Reverse proxy and SSL
+
+**External AWS services:**
+- **RDS PostgreSQL** - Managed database
+- **S3** - Static files storage (optional)
 
 ## 🔧 Manual Deployment Commands
 
@@ -137,9 +108,11 @@ If you need to deploy manually:
 docker build -f ./compose/production/django/Dockerfile -t ghcr.io/alexsukhrin/shum-backend:manual .
 docker push ghcr.io/alexsukhrin/shum-backend:manual
 
-# On EC2 server
+# On EC2 server (set all environment variables)
 export DJANGO_IMAGE=ghcr.io/alexsukhrin/shum-backend:manual
-docker-compose -f docker-compose.production.yml down
+export DATABASE_URL="postgres://marketplace_user:marketplace_password@postgres-instance.cby2c0iga8z1.eu-central-1.rds.amazonaws.com:5432/marketplace?sslmode=require"
+export DJANGO_SECRET_KEY="your-secret-key"
+# ... set all other variables ...
 docker-compose -f docker-compose.production.yml up -d
 ```
 

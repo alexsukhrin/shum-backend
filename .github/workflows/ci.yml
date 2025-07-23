@@ -87,39 +87,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    env:
-      # Django settings
-      DJANGO_SETTINGS_MODULE: config.settings.production
-      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-      DJANGO_ADMIN_URL: ${{ secrets.DJANGO_ADMIN_URL }}
-      DJANGO_ALLOWED_HOSTS: ${{ vars.DJANGO_ALLOWED_HOSTS }}
-
-      # Database
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
-      POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
-      POSTGRES_DB: ${{ vars.POSTGRES_DB }}
-      POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-
-      # Redis
-      REDIS_URL: ${{ secrets.REDIS_URL }}
-
-      # Email settings
-      EMAIL_HOST: ${{ vars.EMAIL_HOST }}
-      EMAIL_PORT: ${{ vars.EMAIL_PORT }}
-      EMAIL_HOST_USER: ${{ vars.EMAIL_HOST_USER }}
-      EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
-      EMAIL_USE_TLS: ${{ vars.EMAIL_USE_TLS }}
-
-      # AWS (if using)
-      DJANGO_AWS_ACCESS_KEY_ID: ${{ secrets.DJANGO_AWS_ACCESS_KEY_ID }}
-      DJANGO_AWS_SECRET_ACCESS_KEY: ${{ secrets.DJANGO_AWS_SECRET_ACCESS_KEY }}
-      DJANGO_AWS_STORAGE_BUCKET_NAME: ${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}
-
-      # Sentry (if using)
-      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
@@ -156,27 +123,49 @@ jobs:
             IMAGE_REPO_LOWER=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             IMAGE_TAG="${{ github.sha }}"
             IMAGE_NAME="${IMAGE_REPO_LOWER}:${IMAGE_TAG}"
-            CONTAINER_NAME="shum-django-app"
 
             echo "--- Pulling new image: $IMAGE_NAME ---"
             docker pull $IMAGE_NAME
 
-            echo "--- Stopping and removing old containers ---"
+            echo "--- Stopping old containers ---"
             docker-compose -f docker-compose.production.yml down || true
 
-            echo "--- Running database migrations ---"
-            docker run --rm --env-file .env.production \
-              --network shum-production-net \
+            echo "--- Creating network if not exists ---"
+            docker network create shum-production-net || true
+
+            echo "--- Running database migrations (AWS RDS) ---"
+            docker run --rm \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e DJANGO_SETTINGS_MODULE=config.settings.production \
+              -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
               "$IMAGE_NAME" python manage.py migrate
 
             echo "--- Collecting static files ---"
-            docker run --rm --env-file .env.production \
-              --network shum-production-net \
+            docker run --rm \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e DJANGO_SETTINGS_MODULE=config.settings.production \
+              -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+              -e DJANGO_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              -e DJANGO_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
               -v static_volume:/app/staticfiles \
               "$IMAGE_NAME" python manage.py collectstatic --noinput
 
-            echo "--- Starting new containers ---"
+            echo "--- Starting containers ---"
             export DJANGO_IMAGE="$IMAGE_NAME"
+            export DATABASE_URL="${{ secrets.DATABASE_URL }}"
+            export DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}"
+            export DJANGO_ADMIN_URL="${{ secrets.DJANGO_ADMIN_URL }}"
+            export DJANGO_ALLOWED_HOSTS="${{ vars.DJANGO_ALLOWED_HOSTS }}"
+            export EMAIL_HOST="${{ vars.EMAIL_HOST }}"
+            export EMAIL_PORT="${{ vars.EMAIL_PORT }}"
+            export EMAIL_HOST_USER="${{ vars.EMAIL_HOST_USER }}"
+            export EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}"
+            export EMAIL_USE_TLS="${{ vars.EMAIL_USE_TLS }}"
+            export DJANGO_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+            export DJANGO_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            export DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}"
+            export AWS_DEFAULT_REGION="${{ vars.AWS_REGION }}"
             docker-compose -f docker-compose.production.yml up -d
 
             echo "--- Cleanup old images ---"

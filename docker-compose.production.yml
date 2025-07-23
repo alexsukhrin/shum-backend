@@ -1,6 +1,4 @@
 volumes:
-  production_postgres_data: {}
-  production_postgres_data_backups: {}
   production_traefik: {}
   static_volume: {}
 
@@ -14,30 +12,42 @@ services:
     container_name: shum_production_django
     platform: linux/x86_64
     depends_on:
-      - postgres
       - redis
     networks:
       - shum-production-net
     volumes:
       - static_volume:/app/staticfiles
-    env_file:
-      - ./.envs/.production/.django
-      - ./.envs/.production/.postgres
+    environment:
+      # Database
+      - DATABASE_URL=${DATABASE_URL}
+      # Django Core
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ADMIN_URL=${DJANGO_ADMIN_URL}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      # Email
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS}
+      # AWS
+      - DJANGO_AWS_ACCESS_KEY_ID=${DJANGO_AWS_ACCESS_KEY_ID}
+      - DJANGO_AWS_SECRET_ACCESS_KEY=${DJANGO_AWS_SECRET_ACCESS_KEY}
+      - DJANGO_AWS_STORAGE_BUCKET_NAME=${DJANGO_AWS_STORAGE_BUCKET_NAME}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
     command: /start
+    restart: unless-stopped
 
-  postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: shum_production_postgres
-    container_name: shum_production_postgres
+  redis:
+    image: redis:6
+    container_name: shum_production_redis
     networks:
       - shum-production-net
-    volumes:
-      - production_postgres_data:/var/lib/postgresql/data
-      - production_postgres_data_backups:/backups
-    env_file:
-      - ./.envs/.production/.postgres
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
 
   traefik:
     build:
@@ -55,19 +65,4 @@ services:
     ports:
       - '0.0.0.0:80:80'
       - '0.0.0.0:443:443'
-
-  redis:
-    image: redis:6
-    container_name: shum_production_redis
-    networks:
-      - shum-production-net
-
-  awscli:
-    build:
-      context: .
-      dockerfile: ./compose/production/aws/Dockerfile
-    image: shum_production_awscli
-    env_file:
-      - ./.envs/.production/.django
-    volumes:
-      - production_postgres_data_backups:/backups:z
+    restart: unless-stopped
