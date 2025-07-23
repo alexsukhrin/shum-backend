@@ -82,10 +82,12 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
+    "storages",
 ]
 
 LOCAL_APPS = [
     "shum.users",
+    "shum.ads",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -330,7 +332,7 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
     "TITLE": "Shum Marketplace API",
-    "DESCRIPTION": "API Documentation for Shum Marketplace - Django REST Framework with JWT Authentication",
+    "DESCRIPTION": "API Documentation for Shum Marketplace - Django REST Framework with JWT Authentication and S3 Storage",
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": [
         "rest_framework.permissions.AllowAny",
@@ -355,6 +357,7 @@ SPECTACULAR_SETTINGS = {
             "description": "User authentication and JWT token management",
         },
         {"name": "Users", "description": "User management operations"},
+        {"name": "Ads", "description": "Marketplace ads with S3 image storage"},
     ],
 }
 # Your stuff...

@@ -3,10 +3,16 @@ from typing import ClassVar
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import EmailField
+from django.db.models import ImageField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from .managers import UserManager
+
+
+def user_avatar_path(instance, filename):
+    """Generate upload path for user avatars."""
+    return f"avatars/user_{instance.id}/{filename}"
 
 
 class User(AbstractUser):
@@ -23,6 +29,15 @@ class User(AbstractUser):
     email = EmailField(_("email address"), unique=True)
     username = None  # type: ignore[assignment]
 
+    # Avatar stored in S3
+    avatar = ImageField(
+        _("Avatar"),
+        upload_to=user_avatar_path,
+        blank=True,
+        null=True,
+        help_text=_("User profile picture (stored in S3)"),
+    )
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
@@ -36,3 +51,8 @@ class User(AbstractUser):
 
         """
         return reverse("users:detail", kwargs={"pk": self.id})
+
+    @property
+    def active_ads_count(self):
+        """Get count of user's active ads."""
+        return self.ads.filter(is_active=True, is_sold=False).count()

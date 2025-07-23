@@ -17,15 +17,28 @@ class UserSerializer(serializers.ModelSerializer[User]):
     last_name = serializers.SerializerMethodField(
         help_text="Last name extracted from name field",
     )
+    avatar_url = serializers.SerializerMethodField(
+        help_text="Full URL to user avatar stored in S3",
+    )
 
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "name", "url"]
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "name",
+            "avatar",
+            "avatar_url",
+            "url",
+        ]
 
         extra_kwargs = {
             "url": {"view_name": "api:user-detail", "lookup_field": "pk"},
             "name": {"help_text": "Full name of the user"},
             "email": {"help_text": "User's email address (used for login)"},
+            "avatar": {"help_text": "User profile picture (uploaded to S3)"},
         }
 
     @extend_schema_field(OpenApiTypes.STR)
@@ -43,6 +56,13 @@ class UserSerializer(serializers.ModelSerializer[User]):
             parts = obj.name.split(" ", 1)
             return parts[1] if len(parts) > 1 else ""
         return ""
+
+    @extend_schema_field(OpenApiTypes.URI)
+    def get_avatar_url(self, obj):
+        """Get full URL to avatar in S3."""
+        if obj.avatar:
+            return obj.avatar.url
+        return None
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
