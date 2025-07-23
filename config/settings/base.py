@@ -1,6 +1,7 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -300,8 +301,6 @@ REST_FRAMEWORK = {
 
 # JWT Settings
 # -------------------------------------------------------------------------------
-from datetime import timedelta
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -330,11 +329,33 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "shum API",
-    "DESCRIPTION": "Documentation of API endpoints of shum",
+    "TITLE": "Shum Marketplace API",
+    "DESCRIPTION": "API Documentation for Shum Marketplace - Django REST Framework with JWT Authentication",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "SERVE_PERMISSIONS": [
+        "rest_framework.permissions.AllowAny",
+    ],  # Allow everyone to view docs
+    "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SORT_OPERATIONS": False,
+    # JWT Authentication configuration
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        },
+    },
+    "SECURITY": [{"Bearer": []}],
+    # Additional settings for better API docs
+    "TAGS": [
+        {
+            "name": "Authentication",
+            "description": "User authentication and JWT token management",
+        },
+        {"name": "Users", "description": "User management operations"},
+    ],
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
