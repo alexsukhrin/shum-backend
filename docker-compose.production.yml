@@ -2,19 +2,24 @@ volumes:
   production_postgres_data: {}
   production_postgres_data_backups: {}
   production_traefik: {}
-  
+  static_volume: {}
 
+networks:
+  shum-production-net:
+    name: shum-production-net
 
 services:
-  django:
-    build:
-      context: .
-      dockerfile: ./compose/production/django/Dockerfile
-
-    image: shum_production_django
+  django: &django
+    image: ${DJANGO_IMAGE:-ghcr.io/alexsukhrin/shum-backend:latest}
+    container_name: shum_production_django
+    platform: linux/x86_64
     depends_on:
       - postgres
       - redis
+    networks:
+      - shum-production-net
+    volumes:
+      - static_volume:/app/staticfiles
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
@@ -25,6 +30,9 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: shum_production_postgres
+    container_name: shum_production_postgres
+    networks:
+      - shum-production-net
     volumes:
       - production_postgres_data:/var/lib/postgresql/data
       - production_postgres_data_backups:/backups
@@ -36,22 +44,29 @@ services:
       context: .
       dockerfile: ./compose/production/traefik/Dockerfile
     image: shum_production_traefik
+    container_name: shum_production_traefik
     depends_on:
       - django
+    networks:
+      - shum-production-net
     volumes:
       - production_traefik:/etc/traefik/acme
+      - static_volume:/app/staticfiles:ro
     ports:
       - '0.0.0.0:80:80'
       - '0.0.0.0:443:443'
 
   redis:
-    image: docker.io/redis:6
-    
+    image: redis:6
+    container_name: shum_production_redis
+    networks:
+      - shum-production-net
 
   awscli:
     build:
       context: .
       dockerfile: ./compose/production/aws/Dockerfile
+    image: shum_production_awscli
     env_file:
       - ./.envs/.production/.django
     volumes:
