@@ -10,23 +10,20 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular.views import SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
+from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenVerifyView
 
 # Import custom JWT views
-from shum.users.api.views import (
-    CustomTokenObtainPairView,
-    UserRegistrationView,
-    UserLoginView,
-    UserProfileView,
-)
+from shum.users.api.views import CustomTokenObtainPairView
+from shum.users.api.views import UserLoginView
+from shum.users.api.views import UserProfileView
+from shum.users.api.views import UserRegistrationView
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
-    path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
+    path(
+        "about/", TemplateView.as_view(template_name="pages/about.html"), name="about"
+    ),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
@@ -38,7 +35,9 @@ urlpatterns = [
     # DRF auth token
     path("api/auth-token/", obtain_auth_token),
     # JWT Authentication endpoints
-    path("api/auth/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path(
+        "api/auth/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"
+    ),
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     # Custom authentication endpoints

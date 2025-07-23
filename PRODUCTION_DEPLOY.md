@@ -162,4 +162,4 @@ Don't forget to:
 - Enable EC2 security groups properly
 - Use IAM roles for AWS services
 - Keep secrets in GitHub Secrets, not in code
-- Regularly update dependencies and base images 
+- Regularly update dependencies and base images

@@ -1,7 +1,7 @@
 volumes:
   shum_local_postgres_data: {}
   shum_local_postgres_data_backups: {}
-  
+
 
 services:
   django:
