@@ -7,8 +7,8 @@
 1. **Не коммитите AWS ключи в Git:**
    ```bash
    # ❌ ПЛОХО - ключи в коде
-   AWS_ACCESS_KEY = "AKIAEXAMPLEKEY123456"
-   AWS_SECRET_KEY = "exampleSecretKey123456789abcdefghijk"
+   AWS_ACCESS_KEY = "YOUR_REAL_ACCESS_KEY"
+   AWS_SECRET_KEY = "YOUR_REAL_SECRET_KEY"
    ```
 
 2. **Не сохраняйте в публичных файлах:**
@@ -27,9 +27,9 @@
 #### **1. Локальная разработка:**
 ```env
 # .envs/.local/.django (НЕ в Git!)
-DJANGO_AWS_ACCESS_KEY_ID=your-key-here
-DJANGO_AWS_SECRET_ACCESS_KEY=your-secret-here
-DJANGO_AWS_STORAGE_BUCKET_NAME=your-bucket
+DJANGO_AWS_ACCESS_KEY_ID=
+DJANGO_AWS_SECRET_ACCESS_KEY=
+DJANGO_AWS_STORAGE_BUCKET_NAME=
 ```
 
 #### **2. Production (GitLab CI/CD):**
@@ -50,8 +50,8 @@ DJANGO_AWS_SECRET_ACCESS_KEY = "secret"
 #### **4. Production Server:**
 ```bash
 # Environment variables
-export DJANGO_AWS_ACCESS_KEY_ID="your-key"
-export DJANGO_AWS_SECRET_ACCESS_KEY="your-secret"
+export DJANGO_AWS_ACCESS_KEY_ID=""
+export DJANGO_AWS_SECRET_ACCESS_KEY=""
 
 # Or use AWS IAM Role (лучший вариант)
 ```

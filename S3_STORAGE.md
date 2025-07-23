@@ -69,9 +69,9 @@ STORAGES = {
 
 ### **Required AWS Variables:**
 ```env
-DJANGO_AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-DJANGO_AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-DJANGO_AWS_STORAGE_BUCKET_NAME=your-marketplace-bucket
+DJANGO_AWS_ACCESS_KEY_ID=your-access-key-here
+DJANGO_AWS_SECRET_ACCESS_KEY=your-secret-access-key-here
+DJANGO_AWS_STORAGE_BUCKET_NAME=your-bucket-name-here
 AWS_DEFAULT_REGION=eu-central-1
 ```
 
@@ -218,9 +218,9 @@ your-marketplace-bucket/
 
 ```env
 # .envs/.local/.django
-DJANGO_AWS_ACCESS_KEY_ID=your-access-key-here
-DJANGO_AWS_SECRET_ACCESS_KEY=your-secret-key-here
-DJANGO_AWS_STORAGE_BUCKET_NAME=your-bucket-name
+DJANGO_AWS_ACCESS_KEY_ID=
+DJANGO_AWS_SECRET_ACCESS_KEY=
+DJANGO_AWS_STORAGE_BUCKET_NAME=
 AWS_DEFAULT_REGION=eu-central-1
 ```
 
