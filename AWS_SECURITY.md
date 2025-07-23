@@ -6,9 +6,9 @@
 
 1. **Не коммитите AWS ключи в Git:**
    ```bash
-   # ❌ ПЛОХО - ключи в коде
-   AWS_ACCESS_KEY = "YOUR_REAL_ACCESS_KEY"
-   AWS_SECRET_KEY = "YOUR_REAL_SECRET_KEY"
+   # ❌ ПЛОХО - любые ключи в коде
+   AWS_ACCESS_KEY = ""
+   AWS_SECRET_KEY = ""
    ```
 
 2. **Не сохраняйте в публичных файлах:**

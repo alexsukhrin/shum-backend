@@ -47,17 +47,17 @@ Your marketplace project is configured to store all media files (photos, avatars
 ### **S3 Settings (Production):**
 ```python
 # AWS S3 Configuration
-AWS_STORAGE_BUCKET_NAME = "your-marketplace-bucket"
+AWS_STORAGE_BUCKET_NAME = ""
 AWS_S3_REGION_NAME = "eu-central-1"
-AWS_S3_CUSTOM_DOMAIN = "your-marketplace-bucket.s3.amazonaws.com"
-MEDIA_URL = "https://your-marketplace-bucket.s3.amazonaws.com/media/"
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 
 # Storage backend for media files
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
-            "bucket_name": "your-marketplace-bucket",
+            "bucket_name": "",
             "region_name": "eu-central-1",
             "location": "media",
             "file_overwrite": False,
@@ -69,9 +69,9 @@ STORAGES = {
 
 ### **Required AWS Variables:**
 ```env
-DJANGO_AWS_ACCESS_KEY_ID=your-access-key-here
-DJANGO_AWS_SECRET_ACCESS_KEY=your-secret-access-key-here
-DJANGO_AWS_STORAGE_BUCKET_NAME=your-bucket-name-here
+DJANGO_AWS_ACCESS_KEY_ID=
+DJANGO_AWS_SECRET_ACCESS_KEY=
+DJANGO_AWS_STORAGE_BUCKET_NAME=
 AWS_DEFAULT_REGION=eu-central-1
 ```
 
