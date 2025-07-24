@@ -1,6 +1,7 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
+import warnings
 from datetime import timedelta
 from pathlib import Path
 
@@ -310,7 +311,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": env("DJANGO_SECRET_KEY", default="django-insecure-change-me"),
+    "SIGNING_KEY": env("DJANGO_SECRET_KEY"),  # No insecure default - must be set!
     "VERIFYING_KEY": None,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
@@ -360,5 +361,40 @@ SPECTACULAR_SETTINGS = {
         {"name": "Ads", "description": "Marketplace ads with S3 image storage"},
     ],
 }
-# Your stuff...
-# ------------------------------------------------------------------------------
+
+# Security validation for JWT
+# -------------------------------------------------------------------------------
+
+# Security constants
+MIN_SECRET_KEY_LENGTH = 50
+INSECURE_SECRET_KEY_DEFAULT = "django-insecure-change-me"  # noqa: S105
+INSECURE_SECRET_KEY_PREFIX = "django-insecure-"  # noqa: S105
+
+# Ensure SECRET_KEY is set and secure for JWT
+_secret_key = env("DJANGO_SECRET_KEY", default=None)
+
+if not _secret_key:
+    msg = (
+        "DJANGO_SECRET_KEY environment variable is required for JWT token signing. "
+        "Set a strong, random key in production!"
+    )
+    raise ValueError(msg)
+
+if _secret_key and (
+    _secret_key == INSECURE_SECRET_KEY_DEFAULT
+    or _secret_key.startswith(INSECURE_SECRET_KEY_PREFIX)
+    or len(_secret_key) < MIN_SECRET_KEY_LENGTH
+):
+    if not DEBUG:
+        msg = (
+            "DJANGO_SECRET_KEY is insecure for production! "
+            f"Use a strong, random secret key ({MIN_SECRET_KEY_LENGTH}+ characters)."
+        )
+        raise ValueError(msg)
+    else:
+        warnings.warn(
+            "Using insecure SECRET_KEY in development. "
+            "Ensure DJANGO_SECRET_KEY is properly set for production!",
+            UserWarning,
+            stacklevel=2,
+        )
