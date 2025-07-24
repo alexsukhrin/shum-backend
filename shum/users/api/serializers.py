@@ -119,14 +119,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         min_length=8,
         help_text="Password (minimum 8 characters)",
     )
-    tokens = serializers.SerializerMethodField(
-        read_only=True,
-        help_text="JWT access and refresh tokens",
-    )
 
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "password", "tokens"]
+        fields = ["id", "email", "first_name", "last_name", "password"]
         extra_kwargs = {
             "password": {"write_only": True},
             "email": {"help_text": "User's email address (must be unique)"},
@@ -143,21 +139,37 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Create user
         return User.objects.create_user(**validated_data)
 
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "refresh": {"type": "string", "description": "JWT refresh token"},
-                "access": {"type": "string", "description": "JWT access token"},
-            },
-        },
-    )
-    def get_tokens(self, obj):
-        """Generate JWT tokens for the created user."""
-        refresh = RefreshToken.for_user(obj)
+    def save(self, **kwargs):
+        """
+        Create user and return complete data structure with user info and tokens.
+
+        Returns:
+            dict: Contains 'user' and 'tokens' keys with complete user data
+                  and JWT tokens
+        """
+        # Create the user
+        user = super().save(**kwargs)
+
+        # Split name into first_name and last_name for response
+        name_parts = user.name.split(" ", 1) if user.name else ["", ""]
+        first_name = name_parts[0] if name_parts else ""
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+
         return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "name": user.name,
+            },
+            "tokens": {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            },
         }
 
 
@@ -166,7 +178,7 @@ class UserLoginSerializer(serializers.Serializer):
     Serializer for user login.
 
     Accepts email and password, validates credentials,
-    and returns user data if authentication is successful.
+    and returns complete data structure with user info and JWT tokens.
     """
 
     email = serializers.EmailField(
@@ -182,9 +194,11 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get("password")
 
         if email and password:
+            # Since USERNAME_FIELD = "email", we can use email directly
+            # Django's authenticate() will map this correctly to the email field
             user = authenticate(
                 request=self.context.get("request"),
-                username=email,
+                email=email,  # Use email parameter directly for clarity
                 password=password,
             )
 
@@ -196,7 +210,27 @@ class UserLoginSerializer(serializers.Serializer):
                 error_message = "User account is disabled."
                 raise serializers.ValidationError(error_message)
 
-            attrs["user"] = user
-            return attrs
+            # Split name into first_name and last_name for response
+            name_parts = user.name.split(" ", 1) if user.name else ["", ""]
+            first_name = name_parts[0] if name_parts else ""
+            last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
+
+            # Return complete data structure
+            return {
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "name": user.name,
+                },
+                "tokens": {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                },
+            }
         error_message = 'Must include "email" and "password".'
         raise serializers.ValidationError(error_message)

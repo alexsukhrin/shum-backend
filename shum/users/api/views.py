@@ -13,7 +13,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import CustomTokenObtainPairSerializer
@@ -107,33 +106,8 @@ class UserRegistrationView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-
-            # Split name into first_name and last_name for response
-            name_parts = user.name.split(" ", 1) if user.name else ["", ""]
-            first_name = name_parts[0] if name_parts else ""
-            last_name = name_parts[1] if len(name_parts) > 1 else ""
-
-            # Generate tokens
-            refresh = RefreshToken.for_user(user)
-
-            return Response(
-                {
-                    "user": {
-                        "id": user.id,
-                        "email": user.email,
-                        "first_name": first_name,
-                        "last_name": last_name,
-                        "name": user.name,
-                    },
-                    "tokens": {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    },
-                },
-                status=status.HTTP_201_CREATED,
-            )
-
+            data = serializer.save()
+            return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -185,33 +159,8 @@ class UserLoginView(APIView):
             context={"request": request},
         )
         if serializer.is_valid():
-            user = serializer.validated_data["user"]
-
-            # Split name into first_name and last_name for response
-            name_parts = user.name.split(" ", 1) if user.name else ["", ""]
-            first_name = name_parts[0] if name_parts else ""
-            last_name = name_parts[1] if len(name_parts) > 1 else ""
-
-            # Generate tokens
-            refresh = RefreshToken.for_user(user)
-
-            return Response(
-                {
-                    "user": {
-                        "id": user.id,
-                        "email": user.email,
-                        "first_name": first_name,
-                        "last_name": last_name,
-                        "name": user.name,
-                    },
-                    "tokens": {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    },
-                },
-                status=status.HTTP_200_OK,
-            )
-
+            data = serializer.validated_data
+            return Response(data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
