@@ -1,6 +1,8 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
+import os
+import sys
 import warnings
 from datetime import timedelta
 from pathlib import Path
@@ -302,6 +304,62 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+# Security validation for JWT
+# -------------------------------------------------------------------------------
+
+# Security constants
+MIN_SECRET_KEY_LENGTH = 50
+INSECURE_SECRET_KEY_DEFAULT = "django-insecure-change-me"  # noqa: S105
+INSECURE_SECRET_KEY_PREFIX = "django-insecure-"  # noqa: S105
+TEST_SECRET_KEY_DEFAULT = (
+    "Ozwnvet9HLKY7UtArCzZQAKE2POZS7HU5Jyv7zGAEXbCClEtcCf5hbuUAb22LTAp"  # noqa: S105
+)
+
+# Check if we're in test environment
+_is_test_environment = (
+    os.environ.get("DJANGO_SETTINGS_MODULE", "").endswith(".test")
+    or "test" in sys.argv
+    or os.environ.get("CI") == "true"
+    or os.environ.get("TESTING") == "true"
+)
+
+# For tests, allow fallback to a test-specific key
+_secret_key = env(
+    "DJANGO_SECRET_KEY",
+    default=TEST_SECRET_KEY_DEFAULT if _is_test_environment else None,
+)
+
+if not _secret_key:
+    msg = (
+        "DJANGO_SECRET_KEY environment variable is required for JWT token signing. "
+        "Set a strong, random key in production!"
+    )
+    raise ValueError(msg)
+
+# Skip security validation for test environment
+if (
+    not _is_test_environment
+    and _secret_key
+    and (
+        _secret_key == INSECURE_SECRET_KEY_DEFAULT
+        or _secret_key.startswith(INSECURE_SECRET_KEY_PREFIX)
+        or len(_secret_key) < MIN_SECRET_KEY_LENGTH
+    )
+):
+    if not DEBUG:
+        msg = (
+            "DJANGO_SECRET_KEY is insecure for production! "
+            f"Use a strong, random secret key ({MIN_SECRET_KEY_LENGTH}+ characters)."
+        )
+        raise ValueError(msg)
+    else:
+        warnings.warn(
+            "Using insecure SECRET_KEY in development. "
+            "Ensure DJANGO_SECRET_KEY is properly set for production!",
+            UserWarning,
+            stacklevel=2,
+        )
+
 # JWT Settings
 # -------------------------------------------------------------------------------
 SIMPLE_JWT = {
@@ -311,7 +369,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": env("DJANGO_SECRET_KEY"),  # No insecure default - must be set!
+    "SIGNING_KEY": _secret_key,  # Set securely with validation above
     "VERIFYING_KEY": None,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
@@ -361,40 +419,3 @@ SPECTACULAR_SETTINGS = {
         {"name": "Ads", "description": "Marketplace ads with S3 image storage"},
     ],
 }
-
-# Security validation for JWT
-# -------------------------------------------------------------------------------
-
-# Security constants
-MIN_SECRET_KEY_LENGTH = 50
-INSECURE_SECRET_KEY_DEFAULT = "django-insecure-change-me"  # noqa: S105
-INSECURE_SECRET_KEY_PREFIX = "django-insecure-"  # noqa: S105
-
-# Ensure SECRET_KEY is set and secure for JWT
-_secret_key = env("DJANGO_SECRET_KEY", default=None)
-
-if not _secret_key:
-    msg = (
-        "DJANGO_SECRET_KEY environment variable is required for JWT token signing. "
-        "Set a strong, random key in production!"
-    )
-    raise ValueError(msg)
-
-if _secret_key and (
-    _secret_key == INSECURE_SECRET_KEY_DEFAULT
-    or _secret_key.startswith(INSECURE_SECRET_KEY_PREFIX)
-    or len(_secret_key) < MIN_SECRET_KEY_LENGTH
-):
-    if not DEBUG:
-        msg = (
-            "DJANGO_SECRET_KEY is insecure for production! "
-            f"Use a strong, random secret key ({MIN_SECRET_KEY_LENGTH}+ characters)."
-        )
-        raise ValueError(msg)
-    else:
-        warnings.warn(
-            "Using insecure SECRET_KEY in development. "
-            "Ensure DJANGO_SECRET_KEY is properly set for production!",
-            UserWarning,
-            stacklevel=2,
-        )
