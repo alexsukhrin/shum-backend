@@ -2,3 +2,7 @@
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
+DATABASE_URL=postgres://debug:debug@postgres:5432/shum
+DJANGO_SECRET_KEY=sk-test-7gqHkraEbyUDBXHGsmRRA5-G9dTmRkcQzGsu1BXkWVA
+DJANGO_DEBUG=True
+DJANGO_READ_DOT_ENV_FILE=True

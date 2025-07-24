@@ -1,7 +1,8 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
-
+import warnings
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -82,10 +83,12 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
+    "storages",
 ]
 
 LOCAL_APPS = [
     "shum.users",
+    "shum.ads",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -291,11 +294,36 @@ SOCIALACCOUNT_FORMS = {"signup": "shum.users.forms.UserSocialSignupForm"}
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# JWT Settings
+# -------------------------------------------------------------------------------
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": env("DJANGO_SECRET_KEY"),  # No insecure default - must be set!
+    "VERIFYING_KEY": None,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=7),
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
@@ -304,11 +332,69 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "shum API",
-    "DESCRIPTION": "Documentation of API endpoints of shum",
+    "TITLE": "Shum Marketplace API",
+    "DESCRIPTION": "API Documentation for Shum Marketplace - Django REST Framework with JWT Authentication and S3 Storage",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "SERVE_PERMISSIONS": [
+        "rest_framework.permissions.AllowAny",
+    ],  # Allow everyone to view docs
+    "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SORT_OPERATIONS": False,
+    # JWT Authentication configuration
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        },
+    },
+    "SECURITY": [{"Bearer": []}],
+    # Additional settings for better API docs
+    "TAGS": [
+        {
+            "name": "Authentication",
+            "description": "User authentication and JWT token management",
+        },
+        {"name": "Users", "description": "User management operations"},
+        {"name": "Ads", "description": "Marketplace ads with S3 image storage"},
+    ],
 }
-# Your stuff...
-# ------------------------------------------------------------------------------
+
+# Security validation for JWT
+# -------------------------------------------------------------------------------
+
+# Security constants
+MIN_SECRET_KEY_LENGTH = 50
+INSECURE_SECRET_KEY_DEFAULT = "django-insecure-change-me"  # noqa: S105
+INSECURE_SECRET_KEY_PREFIX = "django-insecure-"  # noqa: S105
+
+# Ensure SECRET_KEY is set and secure for JWT
+_secret_key = env("DJANGO_SECRET_KEY", default=None)
+
+if not _secret_key:
+    msg = (
+        "DJANGO_SECRET_KEY environment variable is required for JWT token signing. "
+        "Set a strong, random key in production!"
+    )
+    raise ValueError(msg)
+
+if _secret_key and (
+    _secret_key == INSECURE_SECRET_KEY_DEFAULT
+    or _secret_key.startswith(INSECURE_SECRET_KEY_PREFIX)
+    or len(_secret_key) < MIN_SECRET_KEY_LENGTH
+):
+    if not DEBUG:
+        msg = (
+            "DJANGO_SECRET_KEY is insecure for production! "
+            f"Use a strong, random secret key ({MIN_SECRET_KEY_LENGTH}+ characters)."
+        )
+        raise ValueError(msg)
+    else:
+        warnings.warn(
+            "Using insecure SECRET_KEY in development. "
+            "Ensure DJANGO_SECRET_KEY is properly set for production!",
+            UserWarning,
+            stacklevel=2,
+        )
