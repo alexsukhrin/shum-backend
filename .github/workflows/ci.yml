@@ -110,7 +110,7 @@ jobs:
           docker push "${IMAGE_REPO_LOWER}:latest"
 
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ vars.PRODUCTION_HOST }}
           username: ${{ vars.EC2_USERNAME }}
