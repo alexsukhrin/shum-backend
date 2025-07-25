@@ -154,7 +154,7 @@ jobs:
               --env-file .env \
               -v static_volume:/app/staticfiles \
               "$IMAGE_NAME" python manage.py collectstatic --noinput --clear
-            
+
             echo "--- Fix static files permissions ---"
             docker run --rm -v static_volume:/app/staticfiles alpine:latest sh -c "chown -R 1000:1000 /app/staticfiles && chmod -R 755 /app/staticfiles"
 
