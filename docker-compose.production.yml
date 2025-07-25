@@ -1,5 +1,4 @@
 volumes:
-  production_traefik: {}
   static_volume: {}
 
 networks:
@@ -11,22 +10,26 @@ services:
     image: ${DJANGO_IMAGE:-ghcr.io/alexsukhrin/shum-backend:latest}
     container_name: shum_production_django
     platform: linux/x86_64
-    depends_on:
-      - redis
     networks:
       - shum-production-net
     volumes:
       - static_volume:/app/staticfiles
+    ports:
+      - "8032:5000"
     environment:
       # Database
       - DATABASE_URL=${DATABASE_URL}
+      # PostgreSQL variables needed by entrypoint script
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-shum_production}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       # Django Core
       - DJANGO_SETTINGS_MODULE=config.settings.production
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_ADMIN_URL=${DJANGO_ADMIN_URL}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      # Redis
-      - REDIS_URL=redis://redis:6379/0
       # Email
       - EMAIL_HOST=${EMAIL_HOST}
       - EMAIL_PORT=${EMAIL_PORT}
@@ -39,30 +42,4 @@ services:
       - DJANGO_AWS_STORAGE_BUCKET_NAME=${DJANGO_AWS_STORAGE_BUCKET_NAME}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
     command: /start
-    restart: unless-stopped
-
-  redis:
-    image: redis:6
-    container_name: shum_production_redis
-    networks:
-      - shum-production-net
-    restart: unless-stopped
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
-
-  traefik:
-    build:
-      context: .
-      dockerfile: ./compose/production/traefik/Dockerfile
-    image: shum_production_traefik
-    container_name: shum_production_traefik
-    depends_on:
-      - django
-    networks:
-      - shum-production-net
-    volumes:
-      - production_traefik:/etc/traefik/acme
-      - static_volume:/app/staticfiles:ro
-    ports:
-      - '0.0.0.0:80:80'
-      - '0.0.0.0:443:443'
     restart: unless-stopped

@@ -14,7 +14,7 @@ DJANGO_SECRET_KEY=your-very-long-secret-key-here
 DJANGO_ADMIN_URL=your-custom-admin-url/
 DATABASE_URL=postgres://user:password@postgres:5432/shum_production
 POSTGRES_PASSWORD=your-postgres-password
-REDIS_URL=redis://redis:6379/0
+
 EMAIL_HOST_PASSWORD=your-email-app-password
 DJANGO_AWS_ACCESS_KEY_ID=your-aws-access-key
 DJANGO_AWS_SECRET_ACCESS_KEY=your-aws-secret-key
@@ -91,9 +91,7 @@ When you push to `main` branch, GitLab CI/CD will:
 ## 🏗️ Architecture
 
 **Services running on EC2:**
-- **Django** - Main application
-- **Redis** - Caching and sessions
-- **Traefik** - Reverse proxy and SSL
+- **Django** - Main application (with database caching)
 
 **External AWS services:**
 - **RDS PostgreSQL** - Managed database
@@ -113,7 +111,7 @@ export DJANGO_IMAGE=ghcr.io/alexsukhrin/shum-backend:manual
 export DATABASE_URL="postgres://marketplace_user:marketplace_password@postgres-instance.cby2c0iga8z1.eu-central-1.rds.amazonaws.com:5432/marketplace?sslmode=require"
 export DJANGO_SECRET_KEY="your-secret-key"
 # ... set all other variables ...
-docker-compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.production.yml up -d
 ```
 
 ## 🌐 Domain Setup
@@ -125,8 +123,8 @@ Don't forget to:
 
 ## 📊 Monitoring
 
-- Check logs: `docker-compose -f docker-compose.production.yml logs`
-- Container status: `docker-compose -f docker-compose.production.yml ps`
+- Check logs: `docker compose -f docker-compose.production.yml logs`
+- Container status: `docker compose -f docker-compose.production.yml ps`
 - Django admin: `https://your-domain.com/your-admin-url/`
 
 ## 🔐 Security Notes
