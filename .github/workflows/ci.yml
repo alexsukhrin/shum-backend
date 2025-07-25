@@ -168,8 +168,8 @@ jobs:
               -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
               -e DJANGO_SETTINGS_MODULE=config.settings.production \
               -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
-              -e DJANGO_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-              -e DJANGO_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
               -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
               -v static_volume:/app/staticfiles \
               "$IMAGE_NAME" python manage.py collectstatic --noinput
@@ -195,8 +195,8 @@ jobs:
               -e EMAIL_HOST_USER="${{ vars.EMAIL_HOST_USER }}" \
               -e EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" \
               -e EMAIL_USE_TLS="${{ vars.EMAIL_USE_TLS }}" \
-              -e DJANGO_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-              -e DJANGO_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
               -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
               -e AWS_DEFAULT_REGION="${{ vars.AWS_REGION }}" \
               "$IMAGE_NAME"

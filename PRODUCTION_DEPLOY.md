@@ -16,8 +16,8 @@ DATABASE_URL=postgres://user:password@postgres:5432/shum_production
 POSTGRES_PASSWORD=your-postgres-password
 
 EMAIL_HOST_PASSWORD=your-email-app-password
-DJANGO_AWS_ACCESS_KEY_ID=your-aws-access-key
-DJANGO_AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 SENTRY_DSN=your-sentry-dsn
 EC2_SSH_KEY=your-ec2-private-key-content
 ```
