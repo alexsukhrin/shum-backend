@@ -141,42 +141,18 @@ jobs:
 
             echo "--- Running database migrations (AWS RDS) ---"
             docker run --rm \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e POSTGRES_HOST="${{ vars.POSTGRES_HOST }}" \
-              -e POSTGRES_PORT="${{ vars.POSTGRES_PORT }}" \
-              -e POSTGRES_DB="${{ vars.POSTGRES_DB }}" \
-              -e POSTGRES_USER="${{ vars.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e DJANGO_SETTINGS_MODULE=config.settings.production \
-              -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+              --env-file .env \
               "$IMAGE_NAME" python manage.py migrate
 
             echo "--- Creating cache table ---"
             docker run --rm \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e POSTGRES_HOST="${{ vars.POSTGRES_HOST }}" \
-              -e POSTGRES_PORT="${{ vars.POSTGRES_PORT }}" \
-              -e POSTGRES_DB="${{ vars.POSTGRES_DB }}" \
-              -e POSTGRES_USER="${{ vars.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e DJANGO_SETTINGS_MODULE=config.settings.production \
-              -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+              --env-file .env \
               "$IMAGE_NAME" python manage.py createcachetable
 
             echo "--- Collecting static files ---"
             docker run --rm \
               --user 1000:1000 \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e POSTGRES_HOST="${{ vars.POSTGRES_HOST }}" \
-              -e POSTGRES_PORT="${{ vars.POSTGRES_PORT }}" \
-              -e POSTGRES_DB="${{ vars.POSTGRES_DB }}" \
-              -e POSTGRES_USER="${{ vars.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e DJANGO_SETTINGS_MODULE=config.settings.production \
-              -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
-              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-              -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
+              --env-file .env \
               -v static_volume:/app/staticfiles \
               "$IMAGE_NAME" python manage.py collectstatic --noinput
 
@@ -185,29 +161,11 @@ jobs:
               --name shum-production-django \
               --restart=unless-stopped \
               -p 8032:5000 \
+              --env-file .env \
               -v static_volume:/app/staticfiles \
               -v media_volume:/app/media \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e POSTGRES_HOST="${{ vars.POSTGRES_HOST }}" \
-              -e POSTGRES_PORT="${{ vars.POSTGRES_PORT }}" \
-              -e POSTGRES_DB="${{ vars.POSTGRES_DB }}" \
-              -e POSTGRES_USER="${{ vars.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e DJANGO_SETTINGS_MODULE=config.settings.production \
-              -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
-              -e DJANGO_ADMIN_URL="${{ secrets.DJANGO_ADMIN_URL }}" \
-              -e DJANGO_ALLOWED_HOSTS="${{ vars.DJANGO_ALLOWED_HOSTS }}" \
-              -e EMAIL_HOST="${{ vars.EMAIL_HOST }}" \
-              -e EMAIL_PORT="${{ vars.EMAIL_PORT }}" \
-              -e EMAIL_HOST_USER="${{ vars.EMAIL_HOST_USER }}" \
-              -e EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" \
-              -e EMAIL_USE_TLS="${{ vars.EMAIL_USE_TLS }}" \
-              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-              -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
-              -e AWS_DEFAULT_REGION="${{ vars.AWS_REGION }}" \
-              -e SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
-              "$IMAGE_NAME"
+              "$IMAGE_NAME" \
+              /start
 
             echo "--- Cleanup old images ---"
             docker image prune -f
