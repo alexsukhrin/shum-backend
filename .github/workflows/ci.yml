@@ -136,8 +136,8 @@ jobs:
             docker volume create media_volume || true
 
             echo "--- Setting up volume permissions ---"
-            docker run --rm -v static_volume:/app/staticfiles alpine:latest sh -c "rm -rf /app/staticfiles/* && chmod 755 /app/staticfiles && chown -R 1000:1000 /app/staticfiles"
-            docker run --rm -v media_volume:/app/media alpine:latest sh -c "chmod 755 /app/media && chown -R 1000:1000 /app/media"
+            docker run --rm -v static_volume:/app/staticfiles alpine:latest sh -c "rm -rf /app/staticfiles/* && chmod 777 /app/staticfiles"
+            docker run --rm -v media_volume:/app/media alpine:latest sh -c "chmod 777 /app/media"
 
             echo "--- Running database migrations (AWS RDS) ---"
             docker run --rm \
@@ -151,6 +151,7 @@ jobs:
 
             echo "--- Collecting static files ---"
             docker run --rm \
+              --user root \
               --env-file .env \
               -v static_volume:/app/staticfiles \
               "$IMAGE_NAME" python manage.py collectstatic --noinput --clear
