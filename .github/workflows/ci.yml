@@ -135,6 +135,10 @@ jobs:
             docker volume create static_volume || true
             docker volume create media_volume || true
 
+            echo "--- Setting up volume permissions ---"
+            docker run --rm -v static_volume:/app/staticfiles alpine:latest sh -c "chmod 755 /app/staticfiles && chown -R 1000:1000 /app/staticfiles"
+            docker run --rm -v media_volume:/app/media alpine:latest sh -c "chmod 755 /app/media && chown -R 1000:1000 /app/media"
+
             echo "--- Running database migrations (AWS RDS) ---"
             docker run --rm \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
@@ -161,6 +165,7 @@ jobs:
 
             echo "--- Collecting static files ---"
             docker run --rm \
+              --user 1000:1000 \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e POSTGRES_HOST="${{ vars.POSTGRES_HOST }}" \
               -e POSTGRES_PORT="${{ vars.POSTGRES_PORT }}" \
