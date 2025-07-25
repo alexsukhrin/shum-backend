@@ -4,7 +4,6 @@ import logging
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
 
 from .base import *  # noqa: F403
 from .base import BASE_DIR
@@ -202,20 +201,33 @@ LOGGING = {
 
 # Sentry
 # ------------------------------------------------------------------------------
-SENTRY_DSN = env("SENTRY_DSN")
-SENTRY_LOG_LEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
+SENTRY_DSN = env("SENTRY_DSN", default="")
 
-sentry_logging = LoggingIntegration(
-    level=SENTRY_LOG_LEVEL,  # Capture info and above as breadcrumbs
-    event_level=logging.ERROR,  # Send errors as events
-)
-integrations = [sentry_logging, DjangoIntegration(), RedisIntegration()]
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    integrations=integrations,
-    environment=env("SENTRY_ENVIRONMENT", default="production"),
-    traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
-)
+# Only initialize Sentry if DSN is provided
+if SENTRY_DSN:
+    SENTRY_LOG_LEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
+
+    sentry_logging = LoggingIntegration(
+        level=SENTRY_LOG_LEVEL,  # Capture info and above as breadcrumbs
+        event_level=logging.ERROR,  # Send errors as events
+    )
+    integrations = [sentry_logging, DjangoIntegration()]
+
+    # Add RedisIntegration only if we're using Redis
+    if USE_S3:  # S3 projects typically use Redis too
+        try:
+            from sentry_sdk.integrations.redis import RedisIntegration
+
+            integrations.append(RedisIntegration())
+        except ImportError:
+            pass
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=integrations,
+        environment=env("SENTRY_ENVIRONMENT", default="production"),
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
+    )
 
 # django-rest-framework
 # -------------------------------------------------------------------------------
