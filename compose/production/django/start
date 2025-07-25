@@ -4,7 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-echo "--- Collecting static files in container startup ---"
-python /app/manage.py collectstatic --noinput || echo "Static files collection failed, continuing..."
+# Static files are collected in CI/CD, not here
+echo "--- Starting Django with Gunicorn ---"
 
 exec /usr/local/bin/gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app
