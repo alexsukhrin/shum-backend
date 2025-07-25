@@ -131,8 +131,9 @@ jobs:
             docker stop shum-production-django || true
             docker rm shum-production-django || true
 
-            echo "--- Creating static volume if not exists ---"
+            echo "--- Creating static and media volumes if not exists ---"
             docker volume create static_volume || true
+            docker volume create media_volume || true
 
             echo "--- Running database migrations (AWS RDS) ---"
             docker run --rm \
@@ -180,6 +181,7 @@ jobs:
               --restart=unless-stopped \
               -p 8032:5000 \
               -v static_volume:/app/staticfiles \
+              -v media_volume:/app/media \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e POSTGRES_HOST="${{ vars.POSTGRES_HOST }}" \
               -e POSTGRES_PORT="${{ vars.POSTGRES_PORT }}" \
