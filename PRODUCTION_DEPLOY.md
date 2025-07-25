@@ -40,7 +40,7 @@ EC2_USERNAME=ec2-user
 
 ## 🖥️ Server Setup (EC2)
 
-### 1. Install Docker and Docker Compose on EC2:
+### 1. Install Docker on EC2:
 ```bash
 # Update system
 sudo yum update -y
@@ -50,43 +50,32 @@ sudo yum install -y docker
 sudo service docker start
 sudo usermod -a -G docker ec2-user
 
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+# Log out and log back in for docker group to take effect
+exit
+# SSH back in
 ```
 
-### 2. Create required directories:
+### 2. Create required volumes:
 ```bash
-# Create project directory
-mkdir -p /home/ec2-user/shum
-cd /home/ec2-user/shum
-
-# No .env file needed - all variables come from GitLab CI/CD
-```
-
-### 3. Create Docker network and volumes:
-```bash
-# Create network
-docker network create shum-production-net
-
-# Create volumes
+# Create static files volume
 docker volume create static_volume
 ```
 
 ## 🔄 Deployment Process
 
-When you push to `main` branch, GitLab CI/CD will:
+When you push to `main` branch, GitHub CI/CD will:
 
 1. **Run tests** - Linting and pytest
 2. **Build Docker image** - With commit SHA tag
 3. **Push to GitHub Container Registry**
 4. **SSH to EC2 server**
 5. **Pull new image**
-6. **Stop old containers**
+6. **Stop old container**
 7. **Run database migrations** (against AWS RDS)
-8. **Collect static files** (to AWS S3 or local volume)
-9. **Start new containers** with all environment variables from GitLab
-10. **Clean up old images**
+8. **Create cache table** (for Django database caching)
+9. **Collect static files** (to local volume)
+10. **Start new Django container** with all environment variables
+11. **Clean up old images**
 
 ## 🏗️ Architecture
 
@@ -106,12 +95,26 @@ If you need to deploy manually:
 docker build -f ./compose/production/django/Dockerfile -t ghcr.io/alexsukhrin/shum-backend:manual .
 docker push ghcr.io/alexsukhrin/shum-backend:manual
 
-# On EC2 server (set all environment variables)
-export DJANGO_IMAGE=ghcr.io/alexsukhrin/shum-backend:manual
-export DATABASE_URL="postgres://marketplace_user:marketplace_password@postgres-instance.cby2c0iga8z1.eu-central-1.rds.amazonaws.com:5432/marketplace?sslmode=require"
-export DJANGO_SECRET_KEY="your-secret-key"
-# ... set all other variables ...
-docker compose -f docker-compose.production.yml up -d
+# On EC2 server - stop old container and start new one
+docker stop shum-production-django || true
+docker rm shum-production-django || true
+
+docker run -d \
+  --name shum-production-django \
+  --restart=unless-stopped \
+  -p 8032:5000 \
+  -v static_volume:/app/staticfiles \
+  -e DATABASE_URL="postgres://user:pass@your-rds:5432/db" \
+  -e POSTGRES_HOST="your-rds-endpoint" \
+  -e POSTGRES_PORT="5432" \
+  -e POSTGRES_DB="your-db" \
+  -e POSTGRES_USER="your-user" \
+  -e POSTGRES_PASSWORD="your-password" \
+  -e DJANGO_SETTINGS_MODULE=config.settings.production \
+  -e DJANGO_SECRET_KEY="your-secret-key" \
+  -e DJANGO_ADMIN_URL="admin/" \
+  -e DJANGO_ALLOWED_HOSTS="your-domain.com,your-ip" \
+  ghcr.io/alexsukhrin/shum-backend:manual
 ```
 
 ## 🌐 Domain Setup
@@ -123,9 +126,9 @@ Don't forget to:
 
 ## 📊 Monitoring
 
-- Check logs: `docker compose -f docker-compose.production.yml logs`
-- Container status: `docker compose -f docker-compose.production.yml ps`
-- Django admin: `https://your-domain.com/your-admin-url/`
+- Check logs: `docker logs shum-production-django`
+- Container status: `docker ps | grep shum`
+- Django admin: `http://your-domain.com:8032/your-admin-url/`
 
 ## 🔐 Security Notes
 

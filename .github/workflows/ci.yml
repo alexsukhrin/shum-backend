@@ -128,10 +128,11 @@ jobs:
             docker pull $IMAGE_NAME
 
             echo "--- Stopping old containers ---"
-            docker compose -f docker-compose.production.yml down || true
+            docker stop shum-production-django || true
+            docker rm shum-production-django || true
 
-            echo "--- Creating network if not exists ---"
-            docker network create shum-production-net || true
+            echo "--- Creating static volume if not exists ---"
+            docker volume create static_volume || true
 
             echo "--- Running database migrations (AWS RDS) ---"
             docker run --rm \
@@ -173,27 +174,32 @@ jobs:
               -v static_volume:/app/staticfiles \
               "$IMAGE_NAME" python manage.py collectstatic --noinput
 
-            echo "--- Starting containers ---"
-            export DJANGO_IMAGE="$IMAGE_NAME"
-            export DATABASE_URL="${{ secrets.DATABASE_URL }}"
-            export POSTGRES_HOST="${{ vars.POSTGRES_HOST }}"
-            export POSTGRES_PORT="${{ vars.POSTGRES_PORT }}"
-            export POSTGRES_DB="${{ vars.POSTGRES_DB }}"
-            export POSTGRES_USER="${{ vars.POSTGRES_USER }}"
-            export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
-            export DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}"
-            export DJANGO_ADMIN_URL="${{ secrets.DJANGO_ADMIN_URL }}"
-            export DJANGO_ALLOWED_HOSTS="${{ vars.DJANGO_ALLOWED_HOSTS }}"
-            export EMAIL_HOST="${{ vars.EMAIL_HOST }}"
-            export EMAIL_PORT="${{ vars.EMAIL_PORT }}"
-            export EMAIL_HOST_USER="${{ vars.EMAIL_HOST_USER }}"
-            export EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}"
-            export EMAIL_USE_TLS="${{ vars.EMAIL_USE_TLS }}"
-            export DJANGO_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
-            export DJANGO_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-            export DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}"
-            export AWS_DEFAULT_REGION="${{ vars.AWS_REGION }}"
-            docker compose -f docker-compose.production.yml up -d
+            echo "--- Starting Django container ---"
+            docker run -d \
+              --name shum-production-django \
+              --restart=unless-stopped \
+              -p 8032:5000 \
+              -v static_volume:/app/staticfiles \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e POSTGRES_HOST="${{ vars.POSTGRES_HOST }}" \
+              -e POSTGRES_PORT="${{ vars.POSTGRES_PORT }}" \
+              -e POSTGRES_DB="${{ vars.POSTGRES_DB }}" \
+              -e POSTGRES_USER="${{ vars.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e DJANGO_SETTINGS_MODULE=config.settings.production \
+              -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+              -e DJANGO_ADMIN_URL="${{ secrets.DJANGO_ADMIN_URL }}" \
+              -e DJANGO_ALLOWED_HOSTS="${{ vars.DJANGO_ALLOWED_HOSTS }}" \
+              -e EMAIL_HOST="${{ vars.EMAIL_HOST }}" \
+              -e EMAIL_PORT="${{ vars.EMAIL_PORT }}" \
+              -e EMAIL_HOST_USER="${{ vars.EMAIL_HOST_USER }}" \
+              -e EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" \
+              -e EMAIL_USE_TLS="${{ vars.EMAIL_USE_TLS }}" \
+              -e DJANGO_AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              -e DJANGO_AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
+              -e AWS_DEFAULT_REGION="${{ vars.AWS_REGION }}" \
+              "$IMAGE_NAME"
 
             echo "--- Cleanup old images ---"
             docker image prune -f
