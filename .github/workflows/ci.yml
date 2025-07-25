@@ -201,6 +201,7 @@ jobs:
               -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
               -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ vars.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
               -e AWS_DEFAULT_REGION="${{ vars.AWS_REGION }}" \
+              -e SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
               "$IMAGE_NAME"
 
             echo "--- Cleanup old images ---"

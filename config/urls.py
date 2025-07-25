@@ -19,6 +19,12 @@ from shum.users.api.views import UserLoginView
 from shum.users.api.views import UserProfileView
 from shum.users.api.views import UserRegistrationView
 
+
+def trigger_error(request):
+    """Sentry test endpoint - triggers a test error to verify Sentry configuration."""
+    division_by_zero = 1 / 0  # noqa: F841
+
+
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path(
@@ -56,6 +62,10 @@ urlpatterns = [
     ),
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
+
+# Add sentry debug endpoint only in development
+if settings.DEBUG:
+    urlpatterns.append(path("sentry-debug/", trigger_error, name="sentry-debug"))
 
 if settings.DEBUG:
     # This allows the error pages to be debugged during development, just visit

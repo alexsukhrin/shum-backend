@@ -18,7 +18,7 @@ POSTGRES_PASSWORD=your-postgres-password
 EMAIL_HOST_PASSWORD=your-email-app-password
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-SENTRY_DSN=your-sentry-dsn
+SENTRY_DSN=https://4ad947d84c23b781c91a87fa52880842@o1070679.ingest.us.sentry.io/4509729751760896
 EC2_SSH_KEY=your-ec2-private-key-content
 ```
 
