@@ -1,32 +1,32 @@
 # 🔒 AWS Security Guidelines
 
-## ⚠️ **КРИТИЧЕСКИ ВАЖНО: Безопасность AWS ключей**
+## ⚠️ **CRITICALLY IMPORTANT: AWS Key Security**
 
-### **❌ НИКОГДА НЕ ДЕЛАЙТЕ:**
+### **❌ NEVER DO:**
 
-1. **Не коммитите AWS ключи в Git:**
+1. **Don't commit AWS keys to Git:**
    ```bash
-   # ❌ ПЛОХО - любые ключи в коде
+   # ❌ BAD - any keys in code
    AWS_ACCESS_KEY = ""
    AWS_SECRET_KEY = ""
    ```
 
-2. **Не сохраняйте в публичных файлах:**
+2. **Don't save in public files:**
    - README.md
-   - config файлы в Git
-   - Комментарии в коде
-   - Документация
+   - config files in Git
+   - Comments in code
+   - Documentation
 
-3. **Не шарьте в чатах/слаке:**
-   - Скриншоты с ключами
-   - Копирование .env файлов
-   - Логи с credentials
+3. **Don't share in chats/slack:**
+   - Screenshots with keys
+   - Copying .env files
+   - Logs with credentials
 
-### **✅ ПРАВИЛЬНОЕ ХРАНЕНИЕ:**
+### **✅ PROPER STORAGE:**
 
-#### **1. Локальная разработка:**
+#### **1. Local development:**
 ```env
-# .envs/.local/.django (НЕ в Git!)
+# .envs/.local/.django (NOT in Git!)
 DJANGO_AWS_ACCESS_KEY_ID=
 DJANGO_AWS_SECRET_ACCESS_KEY=
 DJANGO_AWS_STORAGE_BUCKET_NAME=
@@ -53,18 +53,18 @@ DJANGO_AWS_SECRET_ACCESS_KEY = "secret"
 export DJANGO_AWS_ACCESS_KEY_ID=""
 export DJANGO_AWS_SECRET_ACCESS_KEY=""
 
-# Or use AWS IAM Role (лучший вариант)
+# Or use AWS IAM Role (best option)
 ```
 
 ### **🛡️ BEST PRACTICES:**
 
-#### **1. Используйте IAM Roles (рекомендуется):**
+#### **1. Use IAM Roles (recommended):**
 ```bash
-# На EC2 instance назначьте IAM Role вместо ключей
-# Тогда AWS SDK автоматически получит credentials
+# Assign IAM Role to EC2 instance instead of keys
+# Then AWS SDK will automatically get credentials
 ```
 
-#### **2. Ограниченные права:**
+#### **2. Limited permissions:**
 ```json
 {
   "Version": "2012-10-17",
@@ -82,58 +82,58 @@ export DJANGO_AWS_SECRET_ACCESS_KEY=""
 }
 ```
 
-#### **3. Ротация ключей:**
-- Меняйте ключи каждые 90 дней
-- Используйте временные ключи где возможно
-- Удаляйте неиспользуемые ключи
+#### **3. Key rotation:**
+- Change keys every 90 days
+- Use temporary keys where possible
+- Delete unused keys
 
-#### **4. Мониторинг:**
-- Включите CloudTrail для логирования
-- Настройте алерты на подозрительную активность
-- Проверяйте Access Logs регулярно
+#### **4. Monitoring:**
+- Enable CloudTrail for logging
+- Set up alerts for suspicious activity
+- Check Access Logs regularly
 
-### **🚨 ЧТО ДЕЛАТЬ ЕСЛИ КЛЮЧИ СКОМПРОМЕТИРОВАНЫ:**
+### **🚨 WHAT TO DO IF KEYS ARE COMPROMISED:**
 
-#### **1. Немедленно:**
+#### **1. Immediately:**
 ```bash
-# 1. Деактивируйте ключи в AWS Console
-# 2. Создайте новые ключи
-# 3. Обновите во всех системах
+# 1. Deactivate keys in AWS Console
+# 2. Create new keys
+# 3. Update in all systems
 ```
 
-#### **2. Очистите Git историю:**
+#### **2. Clean Git history:**
 ```bash
-# Удалите ключи из всех коммитов (ОПАСНО!)
+# Remove keys from all commits (DANGEROUS!)
 git filter-branch --force --index-filter \
   'git rm --cached --ignore-unmatch path/to/file/with/keys' \
   --prune-empty --tag-name-filter cat -- --all
 ```
 
-#### **3. Проверьте логи:**
+#### **3. Check logs:**
 - AWS CloudTrail
 - Billing dashboard
-- Подозрительную активность
+- Suspicious activity
 
-### **📋 CHECKLIST БЕЗОПАСНОСТИ:**
+### **📋 SECURITY CHECKLIST:**
 
-- [ ] ✅ AWS ключи НЕ в Git репозитории
-- [ ] ✅ Используются environment variables
-- [ ] ✅ Ключи в CI/CD как secrets
-- [ ] ✅ Ограниченные IAM права
-- [ ] ✅ Регулярная ротация ключей
-- [ ] ✅ Мониторинг включен
-- [ ] ✅ .env файлы в .gitignore
+- [ ] ✅ AWS keys NOT in Git repository
+- [ ] ✅ Using environment variables
+- [ ] ✅ Keys in CI/CD as secrets
+- [ ] ✅ Limited IAM permissions
+- [ ] ✅ Regular key rotation
+- [ ] ✅ Monitoring enabled
+- [ ] ✅ .env files in .gitignore
 
-### **🔍 КАК ПРОВЕРИТЬ:**
+### **🔍 HOW TO CHECK:**
 
 ```bash
-# Поиск ключей в Git истории
+# Search for keys in Git history
 git log --all -S"AKIA" --source --all
 git log --all -S"AWS_ACCESS_KEY" --source --all
 
-# Проверка текущих файлов
+# Check current files
 grep -r "AKIA" .
 grep -r "AWS_ACCESS_KEY" .
 ```
 
-**🎯 ПОМНИТЕ: Безопасность AWS ключей - это ответственность разработчика!**
+**🎯 REMEMBER: AWS key security is the developer's responsibility!**
