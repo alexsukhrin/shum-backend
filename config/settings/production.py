@@ -235,5 +235,50 @@ if SENTRY_DSN:
 SPECTACULAR_SETTINGS["SERVERS"] = [
     {"url": "https://shum.com", "description": "Production server"},
 ]
+# CORS HEADERS - MVP Configuration
+# ------------------------------------------------------------------------------
+# ⚠️  MVP TEMPORARY SETTING - Allow all origins for flexible deployment
+# 🔄 TODO: Switch to restrictive CORS after MVP phase
+CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
+
+# When CORS_ALLOW_ALL_ORIGINS=False, this setting will be used:
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "https://yourdomain.com",
+        "https://www.yourdomain.com",
+        "https://app.yourdomain.com",
+    ],
+)
+
+# Allow specific headers for API authentication
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# Allow credentials (JWT tokens, cookies)
+CORS_ALLOW_CREDENTIALS = True
+
+# Cache preflight requests for better performance
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
+
+# Allowed methods for API
+CORS_ALLOWED_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
 # Your stuff...
 # ------------------------------------------------------------------------------
