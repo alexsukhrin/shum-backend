@@ -2,9 +2,9 @@
 
 ## Overview
 
-Cross-Origin Resource Sharing (CORS) дозволяє вашому frontend додатку робити запити до API на різних доменах.
+Cross-Origin Resource Sharing (CORS) allows your frontend application to make requests to the API on different domains.
 
-**⚡ MVP Status:** Наразі проект налаштований для швидкого deployment з `CORS_ALLOW_ALL_ORIGINS = True` і в development, і в production для максимальної гнучкості під час розробки MVP.
+**⚡ MVP Status:** Currently, the project is configured for quick deployment with `CORS_ALLOW_ALL_ORIGINS = True` in both development and production for maximum flexibility during MVP development.
 
 ## Development (Local)
 
@@ -16,7 +16,7 @@ CORS_ALLOW_CREDENTIALS = True
 ```
 
 ### Alternative Development Setup
-Якщо ви хочете більше контролю в розробці:
+If you want more control in development:
 
 ```python
 CORS_ALLOW_ALL_ORIGINS = False
@@ -33,7 +33,7 @@ CORS_ALLOWED_ORIGINS = [
 ## Production
 
 ### Current MVP Configuration
-Наразі production використовує відкриті CORS налаштування для швидкого deployment:
+Currently, production uses open CORS settings for quick deployment:
 
 ```python
 # config/settings/production.py
@@ -41,7 +41,7 @@ CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)  # ⚡
 ```
 
 ### Transition to Secure Configuration (After MVP)
-Коли будете готові до production security, перейдіть на обмежений список доменів:
+When you're ready for production security, switch to a restricted list of domains:
 
 ```python
 # config/settings/production.py
@@ -51,24 +51,24 @@ CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[...])
 
 ### MVP to Production Security Transition
 
-**Коли переходити на безпечні налаштування:**
-- ✅ MVP завершено і працює стабільно
-- ✅ Є фіксованi production домени
-- ✅ Frontend готовий до deployment
-- ✅ Немає потреби в частих змінах доменів
+**When to switch to secure settings:**
+- ✅ MVP is complete and working stably
+- ✅ You have fixed production domains
+- ✅ Frontend is ready for deployment
+- ✅ No need for frequent domain changes
 
-**Як зробити перехід:**
+**How to make the transition:**
 
-1. **Встановіть environment variable:**
+1. **Set environment variable:**
 ```bash
-# У вашому .env.production файлі
+# In your .env.production file
 CORS_ALLOW_ALL_ORIGINS=False
 CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com,https://app.yourdomain.com
 ```
 
-2. **Код вже готовий в production.py** - налаштування автоматично застосуються
+2. **Code is already ready in production.py** - settings will be applied automatically
 
-3. **Протестуйте з реальними доменами**
+3. **Test with real domains**
 
 ### Example Use Cases
 
@@ -80,7 +80,7 @@ CORS_ALLOWED_ORIGINS=https://app.yourdomain.com,https://yourdomain.com
 
 #### Mobile App with WebView
 ```bash
-# Додайте file:// для локальних файлів в мобільних додатках
+# Add file:// for local files in mobile apps
 CORS_ALLOWED_ORIGINS=https://yourdomain.com,file://,capacitor://localhost
 ```
 
@@ -92,13 +92,13 @@ CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://staging.yourdomain.com,https
 
 #### Subdomain Support
 ```bash
-# Головний домен та поддомени
+# Main domain and subdomains
 CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com,https://admin.yourdomain.com
 ```
 
 ## API Endpoints
 
-Переконайтесь що ваш frontend використовує правильні URL:
+Make sure your frontend uses the correct URLs:
 
 ### Authentication
 - ✅ `POST /api/auth/register/`
@@ -144,25 +144,25 @@ fetch('http://localhost:8000/api/auth/register/', {
 ### Common CORS Errors
 
 #### "Access-Control-Allow-Origin missing"
-**Причина:** Ваш домен не в `CORS_ALLOWED_ORIGINS`
-**Рішення:** Додайте ваш домен до environment variable
+**Cause:** Your domain is not in `CORS_ALLOWED_ORIGINS`
+**Solution:** Add your domain to the environment variable
 
 #### "CORS policy: credentials mode"
-**Причина:** `CORS_ALLOW_CREDENTIALS = False`
-**Рішення:** Встановіть `CORS_ALLOW_CREDENTIALS = True`
+**Cause:** `CORS_ALLOW_CREDENTIALS = False`
+**Solution:** Set `CORS_ALLOW_CREDENTIALS = True`
 
 #### "Method not allowed"
-**Причина:** HTTP метод не в `CORS_ALLOWED_METHODS`
-**Рішення:** Перевірте що використовуєте POST/GET/PUT/DELETE
+**Cause:** HTTP method is not in `CORS_ALLOWED_METHODS`
+**Solution:** Check that you're using POST/GET/PUT/DELETE
 
 ### Security Warnings
 
-❌ **НІКОЛИ не використовуйте в production:**
+❌ **NEVER use in production:**
 ```python
-CORS_ALLOW_ALL_ORIGINS = True  # Небезпечно!
+CORS_ALLOW_ALL_ORIGINS = True  # Dangerous!
 ```
 
-✅ **Завжди використовуйте конкретні домени:**
+✅ **Always use specific domains:**
 ```python
 CORS_ALLOWED_ORIGINS = ["https://yourdomain.com"]
 ```
@@ -170,22 +170,22 @@ CORS_ALLOWED_ORIGINS = ["https://yourdomain.com"]
 ## Production Deployment Checklist
 
 ### MVP Phase (Current)
-- [x] CORS налаштовано для максимальної гнучкості (`CORS_ALLOW_ALL_ORIGINS = True`)
-- [ ] Тестування з різних доменів/frontend додатків
-- [ ] Моніторинг безпеки та зловживань
+- [x] CORS configured for maximum flexibility (`CORS_ALLOW_ALL_ORIGINS = True`)
+- [ ] Testing with different domains/frontend applications
+- [ ] Security and abuse monitoring
 
 ### Production Security Phase (Future)
-- [ ] Встановлено `CORS_ALLOW_ALL_ORIGINS = False`
-- [ ] Додано тільки необхідні домени в `CORS_ALLOWED_ORIGINS`
-- [ ] Перевірено що HTTPS використовується (не HTTP)
-- [ ] Протестовано CORS з production доменами
-- [ ] Видалено тестові/development домени
-- [ ] Налаштовано monitoring для CORS помилок
+- [ ] Set `CORS_ALLOW_ALL_ORIGINS = False`
+- [ ] Add only necessary domains to `CORS_ALLOWED_ORIGINS`
+- [ ] Verify that HTTPS is used (not HTTP)
+- [ ] Test CORS with production domains
+- [ ] Remove test/development domains
+- [ ] Set up monitoring for CORS errors
 
 ## Need Help?
 
-Якщо у вас проблеми з CORS:
-1. Перевірте Network tab в Developer Tools браузера
-2. Подивіться на preflight OPTIONS requests
-3. Переконайтеся що response headers містять `Access-Control-Allow-Origin`
-4. Перевірте що ваш домен точно співпадає з тим що в `CORS_ALLOWED_ORIGINS`
+If you have CORS issues:
+1. Check the Network tab in browser Developer Tools
+2. Look at preflight OPTIONS requests
+3. Make sure response headers contain `Access-Control-Allow-Origin`
+4. Verify that your domain exactly matches what's in `CORS_ALLOWED_ORIGINS`

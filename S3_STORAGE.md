@@ -1,10 +1,10 @@
 # S3 Storage for Marketplace Images
 
-## 🎯 **Статус S3 Storage:**
+## 🎯 **S3 Storage Status:**
 
-### **✅ В Production (AWS EC2):**
+### **✅ In Production (AWS EC2):**
 ```python
-# Картинки загружаются в S3
+# Images are uploaded to S3
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
@@ -18,9 +18,9 @@ STORAGES = {
 MEDIA_URL = "https://marketplace-bucket-nwnu4de2.s3.amazonaws.com/media/"
 ```
 
-### **🏠 В Development (локально):**
+### **🏠 In Development (locally):**
 ```python
-# Картинки сохраняются локально для тестирования
+# Images are saved locally for testing
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage"
@@ -211,10 +211,10 @@ your-marketplace-bucket/
 
 ## 🧪 **Testing S3 Storage**
 
-### **1. Development (Локально):**
-⚠️ **ВАЖНО: Никогда не коммитите реальные AWS ключи в Git!**
+### **1. Development (Locally):**
+⚠️ **IMPORTANT: Never commit real AWS keys to Git!**
 
-Для локального тестирования можно настроить S3, добавив AWS credentials:
+For local testing, you can configure S3 by adding AWS credentials:
 
 ```env
 # .envs/.local/.django
@@ -224,28 +224,28 @@ DJANGO_AWS_STORAGE_BUCKET_NAME=
 AWS_DEFAULT_REGION=eu-central-1
 ```
 
-### **2. Production проверка:**
+### **2. Production verification:**
 ```bash
-# 1. Загрузить картинку через API
+# 1. Upload image via API
 curl -X POST http://your-domain.com/api/ads/1/upload_image/ \
   -H "Authorization: Bearer TOKEN" \
   -F "image=@test_image.jpg"
 
-# 2. Проверить что URL ведет на S3
+# 2. Verify that URL points to S3
 curl -I "https://your-bucket.s3.amazonaws.com/media/ads/ad_1/image.jpg"
 ```
 
-### **3. Проверка настроек в Django shell:**
+### **3. Check settings in Django shell:**
 ```python
-# На production сервере
+# On production server
 python manage.py shell
 
 >>> from django.conf import settings
 >>> print(settings.STORAGES['default']['BACKEND'])
-# Должно быть: 'storages.backends.s3.S3Storage'
+# Should be: 'storages.backends.s3.S3Storage'
 
 >>> print(settings.MEDIA_URL)
-# Должно быть: 'https://your-bucket.s3.amazonaws.com/media/'
+# Should be: 'https://your-bucket.s3.amazonaws.com/media/'
 ```
 
 ## 🚨 **Important Notes**
