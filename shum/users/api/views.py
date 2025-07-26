@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from drf_spectacular.openapi import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample
@@ -19,6 +21,8 @@ from .serializers import CustomTokenObtainPairSerializer
 from .serializers import UserLoginSerializer
 from .serializers import UserRegistrationSerializer
 from .serializers import UserSerializer
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -104,11 +108,29 @@ class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # Log incoming request data for debugging
+        logger.info("Registration attempt - Request data: %s", request.data)
+        logger.info("Registration attempt - Content type: %s", request.content_type)
+        logger.info("Registration attempt - Method: %s", request.method)
+
         serializer = UserRegistrationSerializer(data=request.data)
+
         if serializer.is_valid():
-            data = serializer.save()
-            return Response(data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            logger.info("Registration serializer is valid, creating user...")
+            try:
+                data = serializer.save()
+                logger.info("User created successfully: %s", data["user"]["email"])
+                return Response(data, status=status.HTTP_201_CREATED)
+            except Exception:
+                logger.exception("Error saving user")
+                return Response(
+                    {"error": "Internal server error during user creation"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        else:
+            logger.warning("Registration validation errors: %s", serializer.errors)
+            logger.warning("Invalid data received: %s", request.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema(
@@ -154,13 +176,21 @@ class UserLoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # Log incoming login request data for debugging
+        logger.info("Login attempt - Request data: %s", request.data)
+        logger.info("Login attempt - Content type: %s", request.content_type)
+
         serializer = UserLoginSerializer(
             data=request.data,
             context={"request": request},
         )
+
         if serializer.is_valid():
             data = serializer.validated_data
+            logger.info("Login successful for user: %s", data["user"]["email"])
             return Response(data, status=status.HTTP_200_OK)
+        logger.warning("Login validation errors: %s", serializer.errors)
+        logger.warning("Invalid login data received: %s", request.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
